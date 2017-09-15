@@ -1,20 +1,21 @@
 require 'test/test_helper'
 require 'fileutils'
 
-class S3CmdTest < Test::Unit::TestCase
+class AWSCliTest < Test::Unit::TestCase
   def setup
-    config = File.expand_path(File.join(File.dirname(__FILE__),'local_s3_cfg'))
-    raise "Please install s3cmd" if `which s3cmd`.empty?
-    @s3cmd = "s3cmd --config #{config}"
+    ENV['AWS_ACCESS_KEY_ID'] = "12345"
+    ENV['AWS_SECRET_ACCESS_KEY'] = "12345"
+    raise "Please install awscli" if `which aws`.empty?
+    @awscli = "aws --region us-east-1 --endpoint localhost:10453"
   end
 
   def teardown
   end
 
   def test_create_bucket
-    `#{@s3cmd} mb s3://s3cmd_bucket`
-    output = `#{@s3cmd} ls`
-    assert_match(/s3cmd_bucket/,output)
+    `#{@awscli} mb s3://awscli_bucket`
+    output = `#{@awscli} ls`
+    assert_match(/awscli_bucket/,output)
   end
 
   def test_store
@@ -23,7 +24,7 @@ class S3CmdTest < Test::Unit::TestCase
         output << input.read
       end
     end
-    output = `#{@s3cmd} put /tmp/fakes3_upload s3://s3cmd_bucket/upload`
+    output = `#{@awscli} cp /tmp/fakes3_upload s3://awscli_bucket/upload`
     assert_match(/upload/,output)
 
     FileUtils.rm("/tmp/fakes3_upload")
@@ -35,10 +36,10 @@ class S3CmdTest < Test::Unit::TestCase
         output << input.read
       end
     end
-    output = `#{@s3cmd} put /tmp/fakes3_acl_upload s3://s3cmd_bucket/acl_upload`
+    output = `#{@awscli} cp /tmp/fakes3_acl_upload s3://awscli_bucket/acl_upload`
     assert_match(/upload/,output)
 
-    output = `#{@s3cmd} --force setacl -P s3://s3cmd_bucket/acl_upload`
+    output = `#{@awscli} --force setacl -P s3://awscli_bucket/acl_upload`
   end
 
   def test_large_store

@@ -1,6 +1,7 @@
 require 'thor'
 require 'fakes3/server'
 require 'fakes3/version'
+require 'fakes3/bucket'
 
 module FakeS3
   class CLI < Thor
@@ -9,6 +10,7 @@ module FakeS3
     desc "server", "Run a server on a particular hostname"
     method_option :root, :type => :string, :aliases => '-r', :required => true
     method_option :port, :type => :numeric, :aliases => '-p', :required => true
+    method_option :buckets, :type => :array, :aliases => '-b', :required => false
     method_option :address, :type => :string, :aliases => '-a', :required => false, :desc => "Bind to this address. Defaults to all IP addresses of the machine."
     method_option :hostname, :type => :string, :aliases => '-H', :desc => "The root name of the host.  Defaults to s3.amazonaws.com."
     method_option :quiet, :type => :boolean, :aliases => '-q', :desc => "Quiet; do not write anything to standard output."
@@ -22,6 +24,11 @@ module FakeS3
         root = File.expand_path(options[:root])
         # TODO Do some sanity checking here
         store = FileStore.new(root, !!options[:quiet])
+        if options[:buckets]
+          options[:buckets].each do |bucket|
+            store.create_bucket(bucket)
+          end
+        end
       end
 
       if store.nil?
